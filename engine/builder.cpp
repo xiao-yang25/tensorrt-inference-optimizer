@@ -19,17 +19,26 @@ template <typename T>
 using TrtUniquePtr = std::unique_ptr<T, void (*)(T*)>;
 
 template <typename T>
+void DestroyTrtObject(T* obj) noexcept {
+  if (!obj) {
+    return;
+  }
+#if NV_TENSORRT_MAJOR >= 10
+  delete obj;
+#else
+  obj->destroy();
+#endif
+}
+
+template <typename T>
 TrtUniquePtr<T> MakeTrt(T* p) {
-  return TrtUniquePtr<T>(p, [](T* obj) {
-    if (obj) {
-      obj->destroy();
-    }
-  });
+  return TrtUniquePtr<T>(p, [](T* obj) { DestroyTrtObject(obj); });
 }
 
 }  // namespace
 
 EngineBuilder::EngineBuilder(TrtLogger* logger) : logger_(logger) {}
+EngineBuilder::~EngineBuilder() = default;
 
 bool EngineBuilder::BuildAndSerialize(const BuildConfig& cfg) {
   const auto plan = BuildSerializedPlan(cfg);
@@ -85,11 +94,15 @@ std::vector<char> EngineBuilder::BuildSerializedPlan(const BuildConfig& cfg) {
     if (!profile->setDimensions(cfg.input_tensor_name.c_str(), nvinfer1::OptProfileSelector::kMIN, dims_min) ||
         !profile->setDimensions(cfg.input_tensor_name.c_str(), nvinfer1::OptProfileSelector::kOPT, dims_opt) ||
         !profile->setDimensions(cfg.input_tensor_name.c_str(), nvinfer1::OptProfileSelector::kMAX, dims_max)) {
+#if NV_TENSORRT_MAJOR < 10
       profile->destroy();
+#endif
       throw std::runtime_error("Failed to set optimization profile dimensions.");
     }
     config->addOptimizationProfile(profile);
+#if NV_TENSORRT_MAJOR < 10
     profile->destroy();
+#endif
   }
 
   auto plan = MakeTrt(builder->buildSerializedNetwork(*network, *config));

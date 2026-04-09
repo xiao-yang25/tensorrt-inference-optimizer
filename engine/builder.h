@@ -16,6 +16,7 @@ class Int8EntropyCalibrator;
 class EngineBuilder {
  public:
   explicit EngineBuilder(TrtLogger* logger);
+  ~EngineBuilder();
 
   bool BuildAndSerialize(const BuildConfig& cfg);
   std::vector<char> BuildSerializedPlan(const BuildConfig& cfg);

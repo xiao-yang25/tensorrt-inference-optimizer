@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-CONFIG="${1:-configure.yaml}"
-
-mkdir -p build
-cmake -S . -B build
-cmake --build build -j
-./build/tio_demo "${CONFIG}"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ $# -ge 1 ]]; then
+  exec "${ROOT_DIR}/tools/run.sh" -m demo -c "$1"
+fi
+exec "${ROOT_DIR}/tools/run.sh" -m demo

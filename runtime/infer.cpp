@@ -10,12 +10,20 @@ namespace tio {
 
 namespace {
 template <typename T>
+void DestroyTrtObject(T* obj) noexcept {
+  if (!obj) {
+    return;
+  }
+#if NV_TENSORRT_MAJOR >= 10
+  delete obj;
+#else
+  obj->destroy();
+#endif
+}
+
+template <typename T>
 std::unique_ptr<T, void (*)(T*)> MakeTrt(T* p) {
-  return std::unique_ptr<T, void (*)(T*)>(p, [](T* obj) {
-    if (obj) {
-      obj->destroy();
-    }
-  });
+  return std::unique_ptr<T, void (*)(T*)>(p, [](T* obj) { DestroyTrtObject(obj); });
 }
 }  // namespace
 

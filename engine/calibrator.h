@@ -1,6 +1,6 @@
 #pragma once
 
-#include <NvInferRuntimeCommon.h>
+#include <NvInfer.h>
 
 #include <cstddef>
 #include <string>

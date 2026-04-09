@@ -20,27 +20,42 @@ python tools/export_engine.py \
 
 ## 3) Build C++ Runtime
 
+默认 CUDA / TensorRT 路径写在 `tools/build.sh` 顶部（`TIO_DEFAULT_*`），一般只需：
+
 ```bash
-cmake -S . -B build
-cmake --build build -j
+# Local（如 GTX 1080，sm_61）
+tools/build.sh -p local
+
+# RTX 4090（sm_89，并打开 benchmark）
+tools/build.sh -p 4090
+
+# 需要时：清目录重编、改路径
+tools/build.sh -p local -c
+tools/build.sh -p local -u /usr/local/cuda -t /usr
 ```
 
 ## 4) Run Demo
 
+默认配置文件写在 `tools/run.sh` 顶部（`TIO_DEFAULT_CONFIG`，相对仓库根）：
+
 ```bash
-./build/tio_demo configure.yaml
+tools/run.sh -m demo
+# 或指定配置
+tools/run.sh -m demo -c cfgs/default.yaml
 ```
 
 ## 5) Run Benchmark
 
 ```bash
-./build/tio_benchmark configure.yaml
+tools/run.sh -m benchmark
+tools/run.sh -m benchmark -c configure.yaml
 ```
 
 ## 6) Profile
 
 ```bash
-nsys profile --stats=true ./build/tio_demo configure.yaml
+tools/run.sh -m demo -n
+tools/run.sh -m demo -n -c configure.yaml
 ```
 
 ## 7) Plugin Correctness Check
