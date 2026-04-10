@@ -1,0 +1,2 @@
+checkpoint/*.pth filter=lfs diff=lfs merge=lfs -text
+checkpoint/*.onnx filter=lfs diff=lfs merge=lfs -text
