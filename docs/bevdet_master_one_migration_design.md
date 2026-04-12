@@ -36,7 +36,7 @@
 
 - 目前偏“工程骨架”：
   - 运行时：`runtime/infer.*` 是通用单 engine runner
-  - plugin：已有 `bevpool_plugin` 占位实现，但未形成完整可用插件栈
+  - plugin：已具备 `BevPool` / `AlignBev` / `GatherBev` 可运行实现与分层测试；后续可继续向 `IPluginV3` 与单引擎全图融合演进
   - 文档和脚本已支持两阶段 ONNX 的引擎构建与独立 benchmark
 
 ---
