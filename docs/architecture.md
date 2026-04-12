@@ -60,5 +60,5 @@ tools/oneclick_ci.sh
 
 Output artifacts:
 
-- `docs/verification_report.md`
+- `reports/verification_report.md`
 - `reports/ci/oneclick_ci.log`

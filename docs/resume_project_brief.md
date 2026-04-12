@@ -26,7 +26,7 @@
 
 4. **建设一键编译测试流程，提升交付质量**
    - 新增一键脚本串联 Configure/Build/CTest 并自动生成验证文档。
-   - 产出 `docs/verification_report.md` 与日志文件，支持交接、审计与 CI 接入。
+   - 产出 `reports/verification_report.md` 与日志文件，支持交接、审计与 CI 接入。
 
 ## 三、详细逻辑（面试讲述模板）
 

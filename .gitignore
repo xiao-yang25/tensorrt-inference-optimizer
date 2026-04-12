@@ -1,7 +1,7 @@
 build/
+build_ci/
 build_plugin/
 engine/*.engine
 engine/*.cache
 reports/
 *.log
-checkpoint/

@@ -15,6 +15,8 @@ tools/run_checkpoint_trt.sh
 - 这验证的是 **每张 ONNX 独立** 的 TensorRT 解析/构建/推理性能；`img_stage` → `bev_stage` 之间的 BEV 特征构造通常仍在 C++ 侧完成。
 - 若需要真实数据集输入，请使用 `trtexec --loadInputs=...`（准备输入 `.pb`）。
 
+仓库目录职责与 Git 边界见：`docs/directory_layout.md`。
+
 ## 0.2 One-click compile + test
 
 ```bash
@@ -23,7 +25,7 @@ tools/oneclick_ci.sh
 
 输出：
 
-- `docs/verification_report.md`
+- `reports/verification_report.md`
 - `reports/ci/oneclick_ci.log`
 
 ## 0.1 Two-stage runtime modes in `tio_demo` / `tio_benchmark`

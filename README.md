@@ -37,7 +37,7 @@ tools/oneclick_ci.sh
 
 执行后会生成：
 
-- `docs/verification_report.md`
+- `reports/verification_report.md`
 - `reports/ci/oneclick_ci.log`
 
 ## 已验证环境（实机）
@@ -157,4 +157,5 @@ python tools/int8_fp16_report.py \
 - `docs/runbook.md`
 - `docs/int8_evaluation.md`
 - `docs/architecture.md`
+- `docs/directory_layout.md`
 - `docs/resume_project_brief.md`

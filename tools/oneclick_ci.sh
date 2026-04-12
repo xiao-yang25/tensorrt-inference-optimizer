@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${ROOT_DIR}/build_ci"
-REPORT="${ROOT_DIR}/docs/verification_report.md"
+REPORT="${ROOT_DIR}/reports/verification_report.md"
 LOG_DIR="${ROOT_DIR}/reports/ci"
 LOG_FILE="${LOG_DIR}/oneclick_ci.log"
 

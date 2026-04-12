@@ -37,7 +37,7 @@ tools/oneclick_ci.sh
 
 Generated artifacts:
 
-- `docs/verification_report.md`
+- `reports/verification_report.md`
 - `reports/ci/oneclick_ci.log`
 
 ## Verified Environment (real machine)
@@ -148,4 +148,5 @@ See also:
 - `docs/runbook.md`
 - `docs/int8_evaluation.md`
 - `docs/architecture.md`
+- `docs/directory_layout.md`
 - `docs/resume_project_brief.md`
