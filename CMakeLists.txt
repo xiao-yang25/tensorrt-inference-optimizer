@@ -57,7 +57,7 @@ set(PROJECT_INCLUDE_DIRS
   ${PROJECT_SOURCE_DIR}/include
   ${PROJECT_SOURCE_DIR}/engine
   ${PROJECT_SOURCE_DIR}/runtime
-  ${PROJECT_SOURCE_DIR}/plugin
+  ${PROJECT_SOURCE_DIR}/plugin/include
 )
 
 function(tio_apply_target_includes target visibility)
@@ -89,13 +89,13 @@ target_link_libraries(tio_core PUBLIC
 
 if(TIO_ENABLE_PLUGIN)
   set(TIO_PLUGIN_SOURCES
-    plugin/alignbev_plugin.cpp
-    plugin/alignbev_plugin_kernel.cu
-    plugin/bevpool_plugin.cpp
-    plugin/bevpool_plugin_kernel.cu
-    plugin/gatherbev_plugin.cpp
-    plugin/gatherbev_plugin_kernel.cu
-    plugin/plugin_registry.cpp
+    plugin/src/alignbev_plugin.cpp
+    plugin/cuda/alignbev_plugin_kernel.cu
+    plugin/src/bevpool_plugin.cpp
+    plugin/cuda/bevpool_plugin_kernel.cu
+    plugin/src/gatherbev_plugin.cpp
+    plugin/cuda/gatherbev_plugin_kernel.cu
+    plugin/src/plugin_registry.cpp
   )
   set(TIO_PLUGIN_OK TRUE)
   foreach(SRC ${TIO_PLUGIN_SOURCES})
@@ -112,69 +112,69 @@ if(TIO_ENABLE_PLUGIN)
     )
     set_target_properties(tio_plugins PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/plugin/bevpool_kernel_test.cu")
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/plugin/tests/bevpool_kernel_test.cu")
       add_executable(tio_bevpool_kernel_test
-        plugin/bevpool_kernel_test.cu
-        plugin/bevpool_plugin_kernel.cu
+        plugin/tests/bevpool_kernel_test.cu
+        plugin/cuda/bevpool_plugin_kernel.cu
       )
       tio_apply_target_includes(tio_bevpool_kernel_test PRIVATE)
       target_link_libraries(tio_bevpool_kernel_test PRIVATE CUDA::cudart)
     endif()
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/plugin/alignbev_kernel_test.cu")
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/plugin/tests/alignbev_kernel_test.cu")
       add_executable(tio_alignbev_kernel_test
-        plugin/alignbev_kernel_test.cu
-        plugin/alignbev_plugin_kernel.cu
+        plugin/tests/alignbev_kernel_test.cu
+        plugin/cuda/alignbev_plugin_kernel.cu
       )
       tio_apply_target_includes(tio_alignbev_kernel_test PRIVATE)
       target_link_libraries(tio_alignbev_kernel_test PRIVATE CUDA::cudart)
     endif()
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/plugin/gatherbev_kernel_test.cu")
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/plugin/tests/gatherbev_kernel_test.cu")
       add_executable(tio_gatherbev_kernel_test
-        plugin/gatherbev_kernel_test.cu
-        plugin/gatherbev_plugin_kernel.cu
+        plugin/tests/gatherbev_kernel_test.cu
+        plugin/cuda/gatherbev_plugin_kernel.cu
       )
       tio_apply_target_includes(tio_gatherbev_kernel_test PRIVATE)
       target_link_libraries(tio_gatherbev_kernel_test PRIVATE CUDA::cudart)
     endif()
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/plugin/plugin_enqueue_smoke_test.cpp")
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/plugin/tests/plugin_enqueue_smoke_test.cpp")
       add_executable(tio_plugin_enqueue_smoke_test
-        plugin/plugin_enqueue_smoke_test.cpp
-        plugin/bevpool_plugin.cpp
-        plugin/bevpool_plugin_kernel.cu
-        plugin/alignbev_plugin.cpp
-        plugin/alignbev_plugin_kernel.cu
-        plugin/gatherbev_plugin.cpp
-        plugin/gatherbev_plugin_kernel.cu
+        plugin/tests/plugin_enqueue_smoke_test.cpp
+        plugin/src/bevpool_plugin.cpp
+        plugin/cuda/bevpool_plugin_kernel.cu
+        plugin/src/alignbev_plugin.cpp
+        plugin/cuda/alignbev_plugin_kernel.cu
+        plugin/src/gatherbev_plugin.cpp
+        plugin/cuda/gatherbev_plugin_kernel.cu
       )
       tio_apply_target_includes(tio_plugin_enqueue_smoke_test PRIVATE)
       target_link_libraries(tio_plugin_enqueue_smoke_test PRIVATE CUDA::cudart ${TENSORRT_LIB_NVINFER})
       set_target_properties(tio_plugin_enqueue_smoke_test PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
     endif()
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/plugin/plugin_minimal_trt_test.cpp")
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/plugin/tests/plugin_minimal_trt_test.cpp")
       add_executable(tio_plugin_minimal_trt_test
-        plugin/plugin_minimal_trt_test.cpp
-        plugin/bevpool_plugin.cpp
-        plugin/bevpool_plugin_kernel.cu
-        plugin/alignbev_plugin.cpp
-        plugin/alignbev_plugin_kernel.cu
-        plugin/gatherbev_plugin.cpp
-        plugin/gatherbev_plugin_kernel.cu
-        plugin/plugin_registry.cpp
+        plugin/tests/plugin_minimal_trt_test.cpp
+        plugin/src/bevpool_plugin.cpp
+        plugin/cuda/bevpool_plugin_kernel.cu
+        plugin/src/alignbev_plugin.cpp
+        plugin/cuda/alignbev_plugin_kernel.cu
+        plugin/src/gatherbev_plugin.cpp
+        plugin/cuda/gatherbev_plugin_kernel.cu
+        plugin/src/plugin_registry.cpp
       )
       tio_apply_target_includes(tio_plugin_minimal_trt_test PRIVATE)
       target_link_libraries(tio_plugin_minimal_trt_test PRIVATE CUDA::cudart ${TENSORRT_LIB_NVINFER})
       set_target_properties(tio_plugin_minimal_trt_test PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
     endif()
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/plugin/plugin_chain_trt_test.cpp")
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/plugin/tests/plugin_chain_trt_test.cpp")
       add_executable(tio_plugin_chain_trt_test
-        plugin/plugin_chain_trt_test.cpp
-        plugin/bevpool_plugin.cpp
-        plugin/bevpool_plugin_kernel.cu
-        plugin/alignbev_plugin.cpp
-        plugin/alignbev_plugin_kernel.cu
-        plugin/gatherbev_plugin.cpp
-        plugin/gatherbev_plugin_kernel.cu
-        plugin/plugin_registry.cpp
+        plugin/tests/plugin_chain_trt_test.cpp
+        plugin/src/bevpool_plugin.cpp
+        plugin/cuda/bevpool_plugin_kernel.cu
+        plugin/src/alignbev_plugin.cpp
+        plugin/cuda/alignbev_plugin_kernel.cu
+        plugin/src/gatherbev_plugin.cpp
+        plugin/cuda/gatherbev_plugin_kernel.cu
+        plugin/src/plugin_registry.cpp
       )
       tio_apply_target_includes(tio_plugin_chain_trt_test PRIVATE)
       target_link_libraries(tio_plugin_chain_trt_test PRIVATE CUDA::cudart ${TENSORRT_LIB_NVINFER})

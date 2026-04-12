@@ -1,10 +1,25 @@
+# CMake 与本地编译产物
 build/
-build_ci/
-build_plugin/
+
+# 引擎、报告、校准缓存等运行产出
+output/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 本地模型与样例（不入库）
 checkpoint/
 model/
 sample0/
+
+# 源码目录旁误生成的 TRT 文件（推荐统一写入 output/）
 engine/*.engine
 engine/*.cache
-reports/
+
+# 根目录临时日志（建议写入 output/logs/）
 *.log
+
+# 旧版报告路径（若仍存在）
+reports/

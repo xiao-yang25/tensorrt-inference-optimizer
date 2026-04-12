@@ -20,7 +20,7 @@ Usage: $(basename "$0") [options] [-- extra args to binary]
 短参数:
   -m <demo|benchmark>   运行目标（默认 demo）
   -c <yaml>             配置文件（相对项目根或绝对路径；默认见脚本 TIO_DEFAULT_CONFIG）
-  -b <dir>              build 目录（默认 <repo>/build）
+  -b <dir>              CMake 构建目录（默认 <repo>/build）
   -n                    用 nsys profile --stats=true 包裹
   -h                    帮助
   --                    之后参数原样传给可执行文件
@@ -85,8 +85,8 @@ if [[ ! -x "${BIN}" ]]; then
   cat >&2 <<EOF
 Binary not found: ${BIN}
 请先编译，例如:
-  tools/build.sh -p local
-  tools/build.sh -p 4090
+  scripts/build.sh -p local
+  scripts/build.sh -p 4090
 EOF
   exit 1
 fi

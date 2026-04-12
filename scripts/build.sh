@@ -25,7 +25,7 @@ Usage: $(basename "$0") [options]
 
 短参数（路径默认见脚本顶部 TIO_DEFAULT_*，需要时再 -u / -t）:
   -p <local|4090>   预设：local=sm61；4090=sm89 并打开 benchmark
-  -c                编译前清空 build 目录
+  -c                编译前清空 build/
   -t <path>         TensorRT 根目录（覆盖默认）
   -u <path>         CUDA Toolkit 根目录（覆盖默认，仍优先 \$CUDA_HOME）
   -a <arch>         CMAKE_CUDA_ARCHITECTURES，如 61 / 89 / 86;89

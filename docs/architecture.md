@@ -6,7 +6,7 @@ The project follows a clear layering model to reduce coupling and avoid duplicat
 
 - **L0 Infrastructure**
   - Build system, toolchain, third-party runtime integration
-  - Main files: `CMakeLists.txt`, `tools/build.sh`
+  - Main files: `CMakeLists.txt`, `scripts/build.sh`
 - **L1 Engine Build**
   - ONNX parsing, precision flags, calibration wiring, profile setup
   - Main files: `engine/builder.*`, `engine/calibrator.*`
@@ -18,10 +18,10 @@ The project follows a clear layering model to reduce coupling and avoid duplicat
   - Main files: `runtime/two_stage_pipeline.*`
 - **L4 Plugin Stack**
   - BEVPool / Align / Gather plugin kernels + TRT wrappers + registry
-  - Main files: `plugin/*`
+  - Main files: `plugin/include/*`, `plugin/src/*`, `plugin/cuda/*`, `plugin/tests/*`
 - **L5 Verification & Reports**
   - Benchmarking, plugin tests, INT8-vs-FP16 comparison, CI report generation
-  - Main files: `bench/*`, `tools/int8_fp16_report.py`, `tools/oneclick_ci.sh`
+  - Main files: `bench/*`, `scripts/int8_fp16_report.py`, `scripts/oneclick_ci.sh`
 
 ## 2. Anti-duplication Rules
 
@@ -30,9 +30,9 @@ The project follows a clear layering model to reduce coupling and avoid duplicat
 - Test registration is centralized under one CTest gate:
   - `TIO_ENABLE_TESTS=ON` + `add_test(...)`
 - Script entry points are unified by responsibility:
-  - Build: `tools/build.sh`
-  - Run: `tools/run.sh`
-  - Full verify: `tools/oneclick_ci.sh`
+  - Build: `scripts/build.sh`
+  - Run: `scripts/run.sh`
+  - Full verify: `scripts/oneclick_ci.sh`
 
 ## 3. Verification Hierarchy
 
@@ -48,17 +48,17 @@ The test chain is intentionally layered:
    - `tio_plugin_minimal_trt_test`
    - `tio_plugin_chain_trt_test`
 4. **Quantization Evaluation**
-   - `tio_compare_engines` + `tools/int8_fp16_report.py`
+   - `tio_compare_engines` + `scripts/int8_fp16_report.py`
 
 ## 4. One-click Engineering Entry
 
 Use one command for compile+test and report:
 
 ```bash
-tools/oneclick_ci.sh
+scripts/oneclick_ci.sh
 ```
 
 Output artifacts:
 
-- `reports/verification_report.md`
-- `reports/ci/oneclick_ci.log`
+- `output/reports/verification_report.md`
+- `output/reports/ci/oneclick_ci.log`

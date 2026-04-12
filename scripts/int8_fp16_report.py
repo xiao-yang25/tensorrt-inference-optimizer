@@ -70,7 +70,7 @@ def main():
     ap.add_argument("--trtexec-bin", default="trtexec")
     ap.add_argument("--warmup-ms", type=int, default=200)
     ap.add_argument("--iterations", type=int, default=400)
-    ap.add_argument("--json-out", default="reports/int8_fp16_report.json")
+    ap.add_argument("--json-out", default="output/reports/int8_fp16_report.json")
     args = ap.parse_args()
 
     if not os.path.exists(args.fp16_engine):

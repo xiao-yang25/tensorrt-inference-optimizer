@@ -10,35 +10,35 @@
 
 ## Project Layout
 
-- `engine/`: engine builder and INT8 calibrator
-- `runtime/`: bindings, buffers, and inference runner
-- `bench/`: benchmark executable
-- `plugin/`: BEVPool / Align / Gather plugins and registry (with kernel/unit/integration tests)
-- `tools/`: build/run/export/validation scripts
-- `docs/`: environment, pipeline, INT8 protocol, perf template
+- `engine/`, `runtime/`, `plugin/`, `bench/`, `src/`, `include/`: C++/CUDA + TensorRT core
+- `scripts/`: build, run, export, one-click CI, and helper Python
+- `cfgs/`, `configure.yaml`: example runtime configs
+- `docs/`: environment, runbook, INT8 protocol, architecture
+
+**`build/`** (CMake) and **`output/`** (engines, caches, reports) are gitignored. See `docs/directory_layout.md`.
 
 ## Recommended Script Entry Points
 
-- `tools/build.sh`: unified CMake build entry (plugin/benchmark toggles)
-- `tools/run.sh`: unified runtime entry for demo/benchmark
-- `tools/export_engine.py`: ONNX -> TensorRT engine export
-- `tools/int8_fp16_report.py`: INT8 vs FP16 perf + output-diff report
-- `tools/run_ptq_baseline.sh`: one-shot PTQ baseline (build FP16/INT8 + report)
-- `tools/run_checkpoint_trt.sh`: quick benchmark for two-stage ONNX in `checkpoint/`
-- `tools/oneclick_ci.sh`: one-click compile+test with verification report output
+- `scripts/build.sh`: unified CMake build entry (plugin/benchmark toggles)
+- `scripts/run.sh`: unified runtime entry for demo/benchmark
+- `scripts/export_engine.py`: ONNX -> TensorRT engine export
+- `scripts/int8_fp16_report.py`: INT8 vs FP16 perf + output-diff report
+- `scripts/run_ptq_baseline.sh`: one-shot PTQ baseline (build FP16/INT8 + report)
+- `scripts/run_checkpoint_trt.sh`: quick benchmark for two-stage ONNX in `checkpoint/`
+- `scripts/oneclick_ci.sh`: one-click compile+test with verification report output
 
 ## Industrial Workflow
 
 One-click compile and test (including plugin test chain):
 
 ```bash
-tools/oneclick_ci.sh
+scripts/oneclick_ci.sh
 ```
 
 Generated artifacts:
 
-- `reports/verification_report.md`
-- `reports/ci/oneclick_ci.log`
+- `output/reports/verification_report.md`
+- `output/reports/ci/oneclick_ci.log`
 
 ## Verified Environment (real machine)
 
@@ -51,7 +51,7 @@ Generated artifacts:
 
 ## Local artifacts (not in Git)
 
-`checkpoint/`, `model/`, `sample0/`, and `engine/*.engine` are **not committed** to the remote. After clone, prepare them locally:
+`checkpoint/`, `model/`, `sample0/`, **`build/`**, and **`output/`** are **not committed** to the remote. After clone, prepare them locally:
 
 - See **`docs/local_artifacts.md`**
 
@@ -68,23 +68,23 @@ Export ONNX and weights following [`LCH1238/BEVDet` export branch README (zh-CN)
 One command to build FP16 engines and run `trtexec`'s built-in benchmark:
 
 ```bash
-tools/run_checkpoint_trt.sh
+scripts/run_checkpoint_trt.sh
 ```
 
 Or manually (equivalent):
 
 ```bash
-mkdir -p engine
+mkdir -p output/engines
 
 trtexec \
   --onnx=checkpoint/img_stage_lt_d.onnx \
-  --saveEngine=engine/img_stage_lt_d_fp16.engine \
+  --saveEngine=output/engines/img_stage_lt_d_fp16.engine \
   --fp16 \
   --memPoolSize=workspace:4096
 
 trtexec \
   --onnx=checkpoint/bev_stage_lt_d.onnx \
-  --saveEngine=engine/bev_stage_lt_d_fp16.engine \
+  --saveEngine=output/engines/bev_stage_lt_d_fp16.engine \
   --fp16 \
   --memPoolSize=workspace:4096
 ```
@@ -101,21 +101,21 @@ Put the ONNX (e.g. `bevdet.onnx`) under local **`model/`** and set `build.onnx_p
 1) (Optional) Generate INT8 calibration batches (scaffold INT8 flow only):
 
 ```bash
-python tools/generate_dummy_calib.py --out-dir sample0 --count 8 --shape 1,6,3,256,704
+python scripts/generate_dummy_calib.py --out-dir sample0 --count 8 --shape 1,6,3,256,704
 ```
 
 2) Build:
 
 ```bash
-tools/build.sh -p local -B -c
+scripts/build.sh -p local -B -c
 ```
 
 3) Export engine (script auto-handles TRT8/TRT10 workspace flags):
 
 ```bash
-python tools/export_engine.py \
+python scripts/export_engine.py \
   --onnx model/bevdet.onnx \
-  --engine engine/bevdet_fp16.engine \
+  --engine output/engines/bevdet_fp16.engine \
   --fp16 \
   --min-shapes input:1x6x3x256x704 \
   --opt-shapes input:1x6x3x256x704 \
@@ -125,7 +125,7 @@ python tools/export_engine.py \
 4) Run benchmark:
 
 ```bash
-tools/run.sh -m benchmark -c cfgs/default.yaml
+scripts/run.sh -m benchmark -c cfgs/default.yaml
 ```
 
 ## Reference benchmark (requires local `checkpoint/`)
@@ -134,8 +134,8 @@ Numbers below are from **RTX 3090 + TensorRT 10.1.0 (CUDA 12.4)**, after placing
 
 | Stage | GPU Compute mean(ms) | Latency mean(ms) | Throughput(qps) | Engine |
 |---|---:|---:|---:|---|
-| img_stage_lt_d | 4.643 | 6.056 | 214.885 | `engine/img_stage_lt_d_fp16.engine` (96M) |
-| bev_stage_lt_d | 1.712 | 5.988 | 246.329 | `engine/bev_stage_lt_d_fp16.engine` (57M) |
+| img_stage_lt_d | 4.643 | 6.056 | 214.885 | `output/engines/img_stage_lt_d_fp16.engine` (96M) |
+| bev_stage_lt_d | 1.712 | 5.988 | 246.329 | `output/engines/bev_stage_lt_d_fp16.engine` (57M) |
 
 Summing GPU-compute means across stages (rough estimate): **~6.355 ms / frame**, excluding intermediate BEV construction and other CPU work.
 

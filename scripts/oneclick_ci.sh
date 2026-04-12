@@ -2,9 +2,9 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BUILD_DIR="${ROOT_DIR}/build_ci"
-REPORT="${ROOT_DIR}/reports/verification_report.md"
-LOG_DIR="${ROOT_DIR}/reports/ci"
+BUILD_DIR="${ROOT_DIR}/build/ci"
+REPORT="${ROOT_DIR}/output/reports/verification_report.md"
+LOG_DIR="${ROOT_DIR}/output/reports/ci"
 LOG_FILE="${LOG_DIR}/oneclick_ci.log"
 
 mkdir -p "${LOG_DIR}" "$(dirname "${REPORT}")"
@@ -41,9 +41,9 @@ run_step "CTest (plugin test suite)" \
 {
   echo "# Verification Report"
   echo
-  echo "- Script: \`tools/oneclick_ci.sh\`"
-  echo "- Build dir: \`build_ci\`"
-  echo "- Log: \`reports/ci/oneclick_ci.log\`"
+  echo "- Script: \`scripts/oneclick_ci.sh\`"
+  echo "- Build dir: \`build/ci\`"
+  echo "- Log: \`output/reports/ci/oneclick_ci.log\`"
   echo
   echo "## Summary"
   echo
@@ -59,7 +59,7 @@ run_step "CTest (plugin test suite)" \
   if [[ "${FAIL}" -eq 0 ]]; then
     echo "All one-click compile/test steps passed."
   else
-    echo "Some steps failed. Check \`reports/ci/oneclick_ci.log\` for details."
+    echo "Some steps failed. Check \`output/reports/ci/oneclick_ci.log\` for details."
   fi
 } > "${REPORT}"
 

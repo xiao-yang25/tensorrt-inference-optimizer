@@ -10,35 +10,35 @@
 
 ## 主要代码结构
 
-- `engine/`: 引擎构建与 INT8 calibrator
-- `runtime/`: 绑定、buffer 管理、推理执行
-- `bench/`: benchmark 可执行程序
-- `plugin/`: BEVPool / Align / Gather 插件与注册入口（含 kernel/unit/integration 测试）
-- `tools/`: 一键构建/运行/导出/校验脚本
-- `docs/`: 环境、流程、INT8 协议、性能模板
+- `engine/`、`runtime/`、`plugin/`、`bench/`、`src/`、`include/`：C++/CUDA 与 TensorRT 核心实现
+- `scripts/`：构建、运行、导出、一键 CI、数据生成等脚本
+- `cfgs/`、`configure.yaml`：运行时配置示例
+- `docs/`：环境、流程、INT8 协议、架构说明
+
+**`build/`**（CMake）与 **`output/`**（引擎、缓存、报告）已 `.gitignore`，不入库。详见 `docs/directory_layout.md`。
 
 ## 脚本入口（建议）
 
-- `tools/build.sh`: CMake 构建入口（支持 plugin / benchmark 开关）
-- `tools/run.sh`: demo/benchmark 统一运行入口
-- `tools/export_engine.py`: ONNX -> TensorRT 引擎导出
-- `tools/int8_fp16_report.py`: INT8 vs FP16 性能与误差报告
-- `tools/run_ptq_baseline.sh`: PTQ 基线一键脚本（构建 FP16/INT8 + 报告）
-- `tools/run_checkpoint_trt.sh`: `checkpoint/` 两阶段 ONNX 快速 benchmark
-- `tools/oneclick_ci.sh`: 一键编译+测试并产出验证报告
+- `scripts/build.sh`: CMake 构建入口（支持 plugin / benchmark 开关）
+- `scripts/run.sh`: demo/benchmark 统一运行入口
+- `scripts/export_engine.py`: ONNX -> TensorRT 引擎导出
+- `scripts/int8_fp16_report.py`: INT8 vs FP16 性能与误差报告
+- `scripts/run_ptq_baseline.sh`: PTQ 基线一键脚本（构建 FP16/INT8 + 报告）
+- `scripts/run_checkpoint_trt.sh`: `checkpoint/` 两阶段 ONNX 快速 benchmark
+- `scripts/oneclick_ci.sh`: 一键编译+测试并产出验证报告
 
 ## 工业化工作流
 
 一键编译与测试（含插件测试链）：
 
 ```bash
-tools/oneclick_ci.sh
+scripts/oneclick_ci.sh
 ```
 
 执行后会生成：
 
-- `reports/verification_report.md`
-- `reports/ci/oneclick_ci.log`
+- `output/reports/verification_report.md`
+- `output/reports/ci/oneclick_ci.log`
 
 ## 已验证环境（实机）
 
@@ -51,7 +51,7 @@ tools/oneclick_ci.sh
 
 ## 本地产物（不入库）
 
-`checkpoint/`、`model/`、`sample0/` 及 `engine/*.engine` 等**不会提交到远程仓库**，克隆后请按说明自行放置或生成：
+`checkpoint/`、`model/`、`sample0/` 以及 **`build/`**、**`output/`** **不会提交到远程仓库**，克隆后请按说明自行放置或生成：
 
 - 详见 **`docs/local_artifacts.md`**
 
@@ -68,23 +68,23 @@ tools/oneclick_ci.sh
 一键构建 FP16 engine 并跑 `trtexec` 自带 benchmark：
 
 ```bash
-tools/run_checkpoint_trt.sh
+scripts/run_checkpoint_trt.sh
 ```
 
 或手动（等价）：
 
 ```bash
-mkdir -p engine
+mkdir -p output/engines
 
 trtexec \
   --onnx=checkpoint/img_stage_lt_d.onnx \
-  --saveEngine=engine/img_stage_lt_d_fp16.engine \
+  --saveEngine=output/engines/img_stage_lt_d_fp16.engine \
   --fp16 \
   --memPoolSize=workspace:4096
 
 trtexec \
   --onnx=checkpoint/bev_stage_lt_d.onnx \
-  --saveEngine=engine/bev_stage_lt_d_fp16.engine \
+  --saveEngine=output/engines/bev_stage_lt_d_fp16.engine \
   --fp16 \
   --memPoolSize=workspace:4096
 ```
@@ -101,21 +101,21 @@ trtexec \
 1) （可选）生成 INT8 校准 batch（仅用于骨架 INT8 流程验证）：
 
 ```bash
-python tools/generate_dummy_calib.py --out-dir sample0 --count 8 --shape 1,6,3,256,704
+python scripts/generate_dummy_calib.py --out-dir sample0 --count 8 --shape 1,6,3,256,704
 ```
 
 2) 编译：
 
 ```bash
-tools/build.sh -p local -B -c
+scripts/build.sh -p local -B -c
 ```
 
 3) 导出引擎（脚本自动兼容 TRT8/TRT10 workspace 参数）：
 
 ```bash
-python tools/export_engine.py \
+python scripts/export_engine.py \
   --onnx model/bevdet.onnx \
-  --engine engine/bevdet_fp16.engine \
+  --engine output/engines/bevdet_fp16.engine \
   --fp16 \
   --min-shapes input:1x6x3x256x704 \
   --opt-shapes input:1x6x3x256x704 \
@@ -125,7 +125,7 @@ python tools/export_engine.py \
 4) 运行 benchmark：
 
 ```bash
-tools/run.sh -m benchmark -c cfgs/default.yaml
+scripts/run.sh -m benchmark -c cfgs/default.yaml
 ```
 
 5) 生成 INT8 vs FP16 报告（时延/吞吐 + 输出误差）：
@@ -134,11 +134,11 @@ tools/run.sh -m benchmark -c cfgs/default.yaml
 cmake -S . -B build -DTIO_ENABLE_BENCHMARK=ON
 cmake --build build -j --target tio_compare_engines
 
-python tools/int8_fp16_report.py \
-  --fp16-engine engine/bevdet_fp16.engine \
-  --int8-engine engine/bevdet_int8.engine \
+python scripts/int8_fp16_report.py \
+  --fp16-engine output/engines/bevdet_fp16.engine \
+  --int8-engine output/engines/bevdet_int8.engine \
   --compare-bin build/tio_compare_engines \
-  --json-out reports/int8_fp16_report.json
+  --json-out output/reports/int8_fp16_report.json
 ```
 
 ## 参考 benchmark（需在本地准备 `checkpoint/`）
@@ -147,8 +147,8 @@ python tools/int8_fp16_report.py \
 
 | Stage | GPU Compute mean(ms) | Latency mean(ms) | Throughput(qps) | Engine |
 |---|---:|---:|---:|---|
-| img_stage_lt_d | 4.643 | 6.056 | 214.885 | `engine/img_stage_lt_d_fp16.engine` (96M) |
-| bev_stage_lt_d | 1.712 | 5.988 | 246.329 | `engine/bev_stage_lt_d_fp16.engine` (57M) |
+| img_stage_lt_d | 4.643 | 6.056 | 214.885 | `output/engines/img_stage_lt_d_fp16.engine` (96M) |
+| bev_stage_lt_d | 1.712 | 5.988 | 246.329 | `output/engines/bev_stage_lt_d_fp16.engine` (57M) |
 
 把两阶段 **GPU 纯算**按均值相加（粗粒度上界/估算）：约 **6.355 ms / frame**（未计入中间 BEV 特征构造与其他 CPU 工作）。
 

@@ -25,7 +25,7 @@
 `origin/master -> origin/one` 文件级差异显示：
 
 - `master`：双阶段引擎 + 中间 CUDA kernel（`preprocess.cu`、`bevpool.cu`、`grid_sampler.cu`）
-- `one`：插件化和单引擎方向（新增 `preprocess_plugin`、`bevpool_plugin`、`alignbev_plugin`、`gatherbev_plugin`，并把 `tools/export_engine.py` 重命名为 `tools/export_one_engine.py`）
+- `one`：插件化和单引擎方向（新增 `preprocess_plugin`、`bevpool_plugin`、`alignbev_plugin`、`gatherbev_plugin`，并把 `scripts/export_engine.py` 重命名为 `scripts/export_one_engine.py`）
 
 核心代码证据：
 
@@ -89,7 +89,7 @@
 | 时序特征对齐（adj） | master/one | P1 | `runtime/temporal/` + plugin | 可先保留 C++/CUDA 实现，后续 plugin 化 |
 | 预处理融合（resize/crop/norm） | one | P1 | `preprocess/` + plugin | 保留 CPU fallback |
 | GatherBEV | one | P2 | plugin | 与时序策略耦合，后置 |
-| 单引擎导出工具链 | one | P2 | `tools/export_one_engine.py` | 与 Track-B 一起启用 |
+| 单引擎导出工具链 | one | P2 | `scripts/export_one_engine.py` | 与 Track-B 一起启用 |
 
 ---
 
@@ -129,7 +129,7 @@
 交付：
 
 - 插件库：`tio_plugins` 扩展为 preprocess/bevpool/align/gather 四插件
-- 新增 `tools/export_one_engine.py`（或 C++ builder）用于构建单 engine
+- 新增 `scripts/export_one_engine.py`（或 C++ builder）用于构建单 engine
 - 支持 `one_engine` 推理模式及回退策略（自动回退 two_stage）
 
 验收指标：

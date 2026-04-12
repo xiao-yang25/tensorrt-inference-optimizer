@@ -2,12 +2,12 @@ pipeline_mode: one_engine # one_engine | two_stage
 
 build:
   onnx_path: model/bevdet.onnx
-  engine_path: engine/bevdet_fp16.engine
+  engine_path: output/engines/bevdet_fp16.engine
   fp16: true
   int8: false
   workspace_mb: 4096
   input_tensor_name: input
-  calibrator_cache_path: engine/calib.cache
+  calibrator_cache_path: output/cache/calib.cache
   calibration_batches: []
   profile:
     min: [1, 6, 3, 256, 704]
@@ -23,8 +23,8 @@ runtime:
   print_stage_timing: false
 
 two_stage:
-  img_engine_path: engine/img_stage_lt_d_fp16.engine
-  bev_engine_path: engine/bev_stage_lt_d_fp16.engine
+  img_engine_path: output/engines/img_stage_lt_d_fp16.engine
+  bev_engine_path: output/engines/bev_stage_lt_d_fp16.engine
   img_feature_tensor: images_feat
   img_depth_tensor: depth
   bev_input_tensor: BEV_feat

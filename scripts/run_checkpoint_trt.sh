@@ -11,10 +11,10 @@ cd "${ROOT_DIR}"
 IMG_ONNX="${1:-checkpoint/img_stage_lt_d.onnx}"
 BEV_ONNX="${2:-checkpoint/bev_stage_lt_d.onnx}"
 
-mkdir -p engine
+mkdir -p "${ROOT_DIR}/output/engines"
 
-IMG_ENGINE="engine/$(basename "${IMG_ONNX}" .onnx)_fp16.engine"
-BEV_ENGINE="engine/$(basename "${BEV_ONNX}" .onnx)_fp16.engine"
+IMG_ENGINE="${ROOT_DIR}/output/engines/$(basename "${IMG_ONNX}" .onnx)_fp16.engine"
+BEV_ENGINE="${ROOT_DIR}/output/engines/$(basename "${BEV_ONNX}" .onnx)_fp16.engine"
 
 if ! command -v trtexec >/dev/null 2>&1; then
   echo "trtexec not found in PATH. On many Linux installs it lives at:" >&2

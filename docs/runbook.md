@@ -7,7 +7,7 @@
 一键构建 FP16 engine 并跑 `trtexec` benchmark：
 
 ```bash
-tools/run_checkpoint_trt.sh
+scripts/run_checkpoint_trt.sh
 ```
 
 说明：
@@ -20,13 +20,13 @@ tools/run_checkpoint_trt.sh
 ## 0.2 One-click compile + test
 
 ```bash
-tools/oneclick_ci.sh
+scripts/oneclick_ci.sh
 ```
 
 输出：
 
-- `reports/verification_report.md`
-- `reports/ci/oneclick_ci.log`
+- `output/reports/verification_report.md`
+- `output/reports/ci/oneclick_ci.log`
 
 ## 0.1 Two-stage runtime modes in `tio_demo` / `tio_benchmark`
 
@@ -48,7 +48,7 @@ tools/oneclick_ci.sh
 生成索引文件（复用 `bevdet-tensorrt-cpp` 的配置与样本）：
 
 ```bash
-python tools/generate_bevpool_indices.py \
+python scripts/generate_bevpool_indices.py \
   --model-cfg /data/bevdet-tensorrt-cpp/cfgs/bevdet_lt_depth.yaml \
   --cam-yaml /data/bevdet-tensorrt-cpp/sample0/sample0000.yaml \
   --out-dir sample0/bevpool_indices
@@ -84,7 +84,7 @@ python tools/generate_bevpool_indices.py \
 可根据样本 YAML 批量生成按帧变换序列：
 
 ```bash
-python tools/generate_transform_sequence_from_samples.py \
+python scripts/generate_transform_sequence_from_samples.py \
   --model-cfg /data/bevdet-tensorrt-cpp/cfgs/bevdet_lt_depth.yaml \
   --samples-dir /data/bevdet-tensorrt-cpp/sample0 \
   --adj-num 8 \
@@ -94,7 +94,7 @@ python tools/generate_transform_sequence_from_samples.py \
 可用以下脚本生成单位矩阵文件：
 
 ```bash
-python tools/generate_identity_transforms.py \
+python scripts/generate_identity_transforms.py \
   --adj-num 8 \
   --out sample0/bevpool_indices/identity_transforms.bin
 ```
@@ -110,15 +110,15 @@ python tools/generate_identity_transforms.py \
 ## 1) Generate Calibration Batches
 
 ```bash
-python tools/generate_dummy_calib.py --out-dir sample0 --count 8 --shape 1,6,3,256,704
+python scripts/generate_dummy_calib.py --out-dir sample0 --count 8 --shape 1,6,3,256,704
 ```
 
 ## 2) Build Engine by trtexec (optional baseline)
 
 ```bash
-python tools/export_engine.py \
+python scripts/export_engine.py \
   --onnx model/bevdet.onnx \
-  --engine engine/bevdet_fp16.engine \
+  --engine output/engines/bevdet_fp16.engine \
   --fp16 \
   --min-shapes input:1x6x3x256x704 \
   --opt-shapes input:4x6x3x256x704 \
@@ -127,7 +127,7 @@ python tools/export_engine.py \
 
 说明：
 
-- `tools/export_engine.py` 已兼容 TRT8/TRT10 workspace 参数差异：
+- `scripts/export_engine.py` 已兼容 TRT8/TRT10 workspace 参数差异：
   - TRT8 常见 `--workspace=4096`
   - TRT10 常见 `--memPoolSize=workspace:4096`
 - 脚本会自动探测 `trtexec --help` 并选择参数。
@@ -138,57 +138,57 @@ INT8 vs FP16 快速报告（性能 + 输出误差）：
 cmake -S . -B build -DTIO_ENABLE_BENCHMARK=ON
 cmake --build build -j --target tio_compare_engines
 
-python tools/int8_fp16_report.py \
-  --fp16-engine engine/bevdet_fp16.engine \
-  --int8-engine engine/bevdet_int8.engine \
+python scripts/int8_fp16_report.py \
+  --fp16-engine output/engines/bevdet_fp16.engine \
+  --int8-engine output/engines/bevdet_int8.engine \
   --compare-bin build/tio_compare_engines \
-  --json-out reports/int8_fp16_report.json
+  --json-out output/reports/int8_fp16_report.json
 ```
 
 ## 3) Build C++ Runtime
 
-默认 CUDA / TensorRT 路径写在 `tools/build.sh` 顶部（`TIO_DEFAULT_*`），一般只需：
+默认 CUDA / TensorRT 路径写在 `scripts/build.sh` 顶部（`TIO_DEFAULT_*`），一般只需：
 
 ```bash
 # Local（如 GTX 1080，sm_61）
-tools/build.sh -p local
+scripts/build.sh -p local
 
 # RTX 4090（sm_89，并打开 benchmark）
-tools/build.sh -p 4090
+scripts/build.sh -p 4090
 
 # 需要时：清目录重编、改路径
-tools/build.sh -p local -c
-tools/build.sh -p local -u /usr/local/cuda -t /usr
+scripts/build.sh -p local -c
+scripts/build.sh -p local -u /usr/local/cuda -t /usr
 ```
 
 ## 4) Run Demo
 
-默认配置文件写在 `tools/run.sh` 顶部（`TIO_DEFAULT_CONFIG`，相对仓库根）：
+默认配置文件写在 `scripts/run.sh` 顶部（`TIO_DEFAULT_CONFIG`，相对仓库根）：
 
 ```bash
-tools/run.sh -m demo
+scripts/run.sh -m demo
 # 或指定配置
-tools/run.sh -m demo -c cfgs/default.yaml
+scripts/run.sh -m demo -c cfgs/default.yaml
 ```
 
 ## 5) Run Benchmark
 
 ```bash
-tools/run.sh -m benchmark
-tools/run.sh -m benchmark -c configure.yaml
+scripts/run.sh -m benchmark
+scripts/run.sh -m benchmark -c configure.yaml
 ```
 
 ## 6) Profile
 
 ```bash
-tools/run.sh -m demo -n
-tools/run.sh -m demo -n -c configure.yaml
+scripts/run.sh -m demo -n
+scripts/run.sh -m demo -n -c configure.yaml
 ```
 
 ## 7) Plugin Correctness Check
 
 ```bash
-python tools/plugin_correctness.py --input sample0/input.npy --output sample0/output.npy
+python scripts/plugin_correctness.py --input sample0/input.npy --output sample0/output.npy
 ```
 
 `BevPoolPlugin` 当前输入约定（one-branch 迁移中的最小协议）：
@@ -204,25 +204,25 @@ python tools/plugin_correctness.py --input sample0/input.npy --output sample0/ou
 可通过独立目标做内核数值单测：
 
 ```bash
-cmake -S . -B build_plugin -DTIO_ENABLE_PLUGIN=ON
-cmake --build build_plugin -j --target tio_bevpool_kernel_test
-./build_plugin/tio_bevpool_kernel_test
+cmake -S . -B build/plugin -DTIO_ENABLE_PLUGIN=ON
+cmake --build build/plugin -j --target tio_bevpool_kernel_test
+./build/plugin/tio_bevpool_kernel_test
 ```
 
 Align kernel 单测：
 
 ```bash
-cmake -S . -B build_plugin -DTIO_ENABLE_PLUGIN=ON
-cmake --build build_plugin -j --target tio_alignbev_kernel_test
-./build_plugin/tio_alignbev_kernel_test
+cmake -S . -B build/plugin -DTIO_ENABLE_PLUGIN=ON
+cmake --build build/plugin -j --target tio_alignbev_kernel_test
+./build/plugin/tio_alignbev_kernel_test
 ```
 
 Gather kernel 单测：
 
 ```bash
-cmake -S . -B build_plugin -DTIO_ENABLE_PLUGIN=ON
-cmake --build build_plugin -j --target tio_gatherbev_kernel_test
-./build_plugin/tio_gatherbev_kernel_test
+cmake -S . -B build/plugin -DTIO_ENABLE_PLUGIN=ON
+cmake --build build/plugin -j --target tio_gatherbev_kernel_test
+./build/plugin/tio_gatherbev_kernel_test
 ```
 
 `AlignBevPlugin` 当前输入约定（最小协议）：
@@ -241,25 +241,25 @@ cmake --build build_plugin -j --target tio_gatherbev_kernel_test
 插件 `enqueue` 冒烟测试（覆盖插件外壳 + CUDA 内核）：
 
 ```bash
-cmake -S . -B build_plugin -DTIO_ENABLE_PLUGIN=ON
-cmake --build build_plugin -j --target tio_plugin_enqueue_smoke_test
-./build_plugin/tio_plugin_enqueue_smoke_test
+cmake -S . -B build/plugin -DTIO_ENABLE_PLUGIN=ON
+cmake --build build/plugin -j --target tio_plugin_enqueue_smoke_test
+./build/plugin/tio_plugin_enqueue_smoke_test
 ```
 
 最小 TRT 建图/序列化/反序列化/执行集成测试（同一网络挂载 `BevPool+Align+Gather`）：
 
 ```bash
-cmake -S . -B build_plugin -DTIO_ENABLE_PLUGIN=ON
-cmake --build build_plugin -j --target tio_plugin_minimal_trt_test
-./build_plugin/tio_plugin_minimal_trt_test
+cmake -S . -B build/plugin -DTIO_ENABLE_PLUGIN=ON
+cmake --build build/plugin -j --target tio_plugin_minimal_trt_test
+./build/plugin/tio_plugin_minimal_trt_test
 ```
 
 `Gather -> Align` 串联子图集成测试（验证插件间真实张量衔接）：
 
 ```bash
-cmake -S . -B build_plugin -DTIO_ENABLE_PLUGIN=ON
-cmake --build build_plugin -j --target tio_plugin_chain_trt_test
-./build_plugin/tio_plugin_chain_trt_test
+cmake -S . -B build/plugin -DTIO_ENABLE_PLUGIN=ON
+cmake --build build/plugin -j --target tio_plugin_chain_trt_test
+./build/plugin/tio_plugin_chain_trt_test
 ```
 
 ## 8) Known Build/Runtime Pitfalls (from real runs)
@@ -288,7 +288,7 @@ cmake --build build_plugin -j --target tio_plugin_chain_trt_test
 4. **TRT10 CLI incompatible with legacy `--workspace`**
 
    - Symptom: `Unknown option: --workspace ...`
-   - Fix: use `--memPoolSize=workspace:<MiB>` or run updated `tools/export_engine.py`.
+   - Fix: use `--memPoolSize=workspace:<MiB>` or run updated `scripts/export_engine.py`.
 
 ## Known Gaps
 
@@ -298,19 +298,17 @@ cmake --build build_plugin -j --target tio_plugin_chain_trt_test
 ## Script Organization (current)
 
 - Build:
-  - `tools/build.sh`
+  - `scripts/build.sh`
 - Run:
-  - `tools/run.sh`
-  - `tools/run_demo.sh` (demo alias)
-  - `tools/profile.sh` (demo+nsys alias)
+  - `scripts/run.sh`（`-m demo` / `-m benchmark`；加 `-n` 可用 nsys profile）
 - Export/Benchmark:
-  - `tools/export_engine.py`
-  - `tools/run_checkpoint_trt.sh`
+  - `scripts/export_engine.py`
+  - `scripts/run_checkpoint_trt.sh`
 - Quantization report:
-  - `tools/int8_fp16_report.py`
-  - `tools/run_ptq_baseline.sh`
+  - `scripts/int8_fp16_report.py`
+  - `scripts/run_ptq_baseline.sh`
 - Data prep:
-  - `tools/generate_dummy_calib.py`
-  - `tools/generate_bevpool_indices.py`
-  - `tools/generate_transform_sequence_from_samples.py`
-  - `tools/generate_identity_transforms.py`
+  - `scripts/generate_dummy_calib.py`
+  - `scripts/generate_bevpool_indices.py`
+  - `scripts/generate_transform_sequence_from_samples.py`
+  - `scripts/generate_identity_transforms.py`
