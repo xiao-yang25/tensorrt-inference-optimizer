@@ -12,6 +12,36 @@ Evaluate INT8 acceleration against FP16 baseline while controlling acceptable ac
 4. Run identical benchmark settings and compare.
 5. Run detection metric script on the same validation split.
 
+### Practical commands (current repo)
+
+```bash
+# Fast path: one script
+tools/run_ptq_baseline.sh
+
+# Or manual path:
+# 1) Build binaries that include benchmark + engine comparator
+cmake -S . -B build -DTIO_ENABLE_BENCHMARK=ON
+cmake --build build -j --target tio_benchmark tio_compare_engines
+
+# 2) Prepare engines (example names)
+#    - FP16: engine/bevdet_fp16.engine
+#    - INT8: engine/bevdet_int8.engine
+
+# 3) Generate one-shot report (trtexec performance + output diff)
+python tools/int8_fp16_report.py \
+  --fp16-engine engine/bevdet_fp16.engine \
+  --int8-engine engine/bevdet_int8.engine \
+  --compare-bin build/tio_compare_engines \
+  --json-out reports/int8_fp16_report.json
+```
+
+`tio_compare_engines` uses identical synthetic inputs for both engines and reports:
+
+- `overall_mae`
+- `overall_rmse`
+- `overall_max_abs`
+- `overall_mismatched/overall_count`
+
 ## Required Outputs
 
 - `engine/calib.cache` generated and reused.

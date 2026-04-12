@@ -12,6 +12,7 @@ set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
 option(TIO_ENABLE_BENCHMARK "Build benchmark binary" OFF)
 option(TIO_ENABLE_PLUGIN "Build custom plugins" OFF)
+option(TIO_ENABLE_TESTS "Register and run CTest tests" ON)
 option(TIO_STRICT_TARGETS "Fail when optional sources are missing" OFF)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -59,19 +60,26 @@ set(PROJECT_INCLUDE_DIRS
   ${PROJECT_SOURCE_DIR}/plugin
 )
 
+function(tio_apply_target_includes target visibility)
+  target_include_directories(${target} ${visibility} ${PROJECT_INCLUDE_DIRS})
+  if(NOT TENSORRT_INCLUDE_DIR STREQUAL "/usr/include" AND
+     NOT TENSORRT_INCLUDE_DIR STREQUAL "/usr/include/x86_64-linux-gnu")
+    target_include_directories(${target} SYSTEM ${visibility} ${TENSORRT_INCLUDE_DIR})
+  endif()
+endfunction()
+
 add_library(tio_core
   src/config.cpp
   engine/builder.cpp
   engine/calibrator.cpp
   runtime/buffer_manager.cpp
   runtime/infer.cpp
+  runtime/bevpool_cuda.cu
+  runtime/bev_align_cuda.cu
+  runtime/two_stage_pipeline.cpp
 )
 
-target_include_directories(tio_core PUBLIC ${PROJECT_INCLUDE_DIRS})
-if(NOT TENSORRT_INCLUDE_DIR STREQUAL "/usr/include" AND
-   NOT TENSORRT_INCLUDE_DIR STREQUAL "/usr/include/x86_64-linux-gnu")
-  target_include_directories(tio_core SYSTEM PUBLIC ${TENSORRT_INCLUDE_DIR})
-endif()
+tio_apply_target_includes(tio_core PUBLIC)
 target_link_libraries(tio_core PUBLIC
   yaml-cpp
   CUDA::cudart
@@ -81,8 +89,12 @@ target_link_libraries(tio_core PUBLIC
 
 if(TIO_ENABLE_PLUGIN)
   set(TIO_PLUGIN_SOURCES
+    plugin/alignbev_plugin.cpp
+    plugin/alignbev_plugin_kernel.cu
     plugin/bevpool_plugin.cpp
     plugin/bevpool_plugin_kernel.cu
+    plugin/gatherbev_plugin.cpp
+    plugin/gatherbev_plugin_kernel.cu
     plugin/plugin_registry.cpp
   )
   set(TIO_PLUGIN_OK TRUE)
@@ -93,16 +105,81 @@ if(TIO_ENABLE_PLUGIN)
   endforeach()
   if(TIO_PLUGIN_OK)
     add_library(tio_plugins SHARED ${TIO_PLUGIN_SOURCES})
-    target_include_directories(tio_plugins PUBLIC ${PROJECT_INCLUDE_DIRS})
-    if(NOT TENSORRT_INCLUDE_DIR STREQUAL "/usr/include" AND
-       NOT TENSORRT_INCLUDE_DIR STREQUAL "/usr/include/x86_64-linux-gnu")
-      target_include_directories(tio_plugins SYSTEM PUBLIC ${TENSORRT_INCLUDE_DIR})
-    endif()
+    tio_apply_target_includes(tio_plugins PUBLIC)
     target_link_libraries(tio_plugins PUBLIC
       CUDA::cudart
       ${TENSORRT_LIB_NVINFER}
     )
     set_target_properties(tio_plugins PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/plugin/bevpool_kernel_test.cu")
+      add_executable(tio_bevpool_kernel_test
+        plugin/bevpool_kernel_test.cu
+        plugin/bevpool_plugin_kernel.cu
+      )
+      tio_apply_target_includes(tio_bevpool_kernel_test PRIVATE)
+      target_link_libraries(tio_bevpool_kernel_test PRIVATE CUDA::cudart)
+    endif()
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/plugin/alignbev_kernel_test.cu")
+      add_executable(tio_alignbev_kernel_test
+        plugin/alignbev_kernel_test.cu
+        plugin/alignbev_plugin_kernel.cu
+      )
+      tio_apply_target_includes(tio_alignbev_kernel_test PRIVATE)
+      target_link_libraries(tio_alignbev_kernel_test PRIVATE CUDA::cudart)
+    endif()
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/plugin/gatherbev_kernel_test.cu")
+      add_executable(tio_gatherbev_kernel_test
+        plugin/gatherbev_kernel_test.cu
+        plugin/gatherbev_plugin_kernel.cu
+      )
+      tio_apply_target_includes(tio_gatherbev_kernel_test PRIVATE)
+      target_link_libraries(tio_gatherbev_kernel_test PRIVATE CUDA::cudart)
+    endif()
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/plugin/plugin_enqueue_smoke_test.cpp")
+      add_executable(tio_plugin_enqueue_smoke_test
+        plugin/plugin_enqueue_smoke_test.cpp
+        plugin/bevpool_plugin.cpp
+        plugin/bevpool_plugin_kernel.cu
+        plugin/alignbev_plugin.cpp
+        plugin/alignbev_plugin_kernel.cu
+        plugin/gatherbev_plugin.cpp
+        plugin/gatherbev_plugin_kernel.cu
+      )
+      tio_apply_target_includes(tio_plugin_enqueue_smoke_test PRIVATE)
+      target_link_libraries(tio_plugin_enqueue_smoke_test PRIVATE CUDA::cudart ${TENSORRT_LIB_NVINFER})
+      set_target_properties(tio_plugin_enqueue_smoke_test PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+    endif()
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/plugin/plugin_minimal_trt_test.cpp")
+      add_executable(tio_plugin_minimal_trt_test
+        plugin/plugin_minimal_trt_test.cpp
+        plugin/bevpool_plugin.cpp
+        plugin/bevpool_plugin_kernel.cu
+        plugin/alignbev_plugin.cpp
+        plugin/alignbev_plugin_kernel.cu
+        plugin/gatherbev_plugin.cpp
+        plugin/gatherbev_plugin_kernel.cu
+        plugin/plugin_registry.cpp
+      )
+      tio_apply_target_includes(tio_plugin_minimal_trt_test PRIVATE)
+      target_link_libraries(tio_plugin_minimal_trt_test PRIVATE CUDA::cudart ${TENSORRT_LIB_NVINFER})
+      set_target_properties(tio_plugin_minimal_trt_test PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+    endif()
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/plugin/plugin_chain_trt_test.cpp")
+      add_executable(tio_plugin_chain_trt_test
+        plugin/plugin_chain_trt_test.cpp
+        plugin/bevpool_plugin.cpp
+        plugin/bevpool_plugin_kernel.cu
+        plugin/alignbev_plugin.cpp
+        plugin/alignbev_plugin_kernel.cu
+        plugin/gatherbev_plugin.cpp
+        plugin/gatherbev_plugin_kernel.cu
+        plugin/plugin_registry.cpp
+      )
+      tio_apply_target_includes(tio_plugin_chain_trt_test PRIVATE)
+      target_link_libraries(tio_plugin_chain_trt_test PRIVATE CUDA::cudart ${TENSORRT_LIB_NVINFER})
+      set_target_properties(tio_plugin_chain_trt_test PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+    endif()
   elseif(TIO_STRICT_TARGETS)
     message(FATAL_ERROR "Plugin sources are missing but TIO_ENABLE_PLUGIN=ON.")
   else()
@@ -111,25 +188,47 @@ if(TIO_ENABLE_PLUGIN)
 endif()
 
 add_executable(tio_demo src/demo_main.cpp)
-target_include_directories(tio_demo PRIVATE ${PROJECT_INCLUDE_DIRS})
-if(NOT TENSORRT_INCLUDE_DIR STREQUAL "/usr/include" AND
-   NOT TENSORRT_INCLUDE_DIR STREQUAL "/usr/include/x86_64-linux-gnu")
-  target_include_directories(tio_demo SYSTEM PRIVATE ${TENSORRT_INCLUDE_DIR})
-endif()
+tio_apply_target_includes(tio_demo PRIVATE)
 target_link_libraries(tio_demo PRIVATE tio_core)
 
 if(TIO_ENABLE_BENCHMARK)
   if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/bench/benchmark.cpp")
     add_executable(tio_benchmark bench/benchmark.cpp)
-    target_include_directories(tio_benchmark PRIVATE ${PROJECT_INCLUDE_DIRS})
-    if(NOT TENSORRT_INCLUDE_DIR STREQUAL "/usr/include" AND
-       NOT TENSORRT_INCLUDE_DIR STREQUAL "/usr/include/x86_64-linux-gnu")
-      target_include_directories(tio_benchmark SYSTEM PRIVATE ${TENSORRT_INCLUDE_DIR})
-    endif()
+    tio_apply_target_includes(tio_benchmark PRIVATE)
     target_link_libraries(tio_benchmark PRIVATE tio_core)
+
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/bench/compare_engines.cpp")
+      add_executable(tio_compare_engines bench/compare_engines.cpp)
+      tio_apply_target_includes(tio_compare_engines PRIVATE)
+      target_link_libraries(tio_compare_engines PRIVATE tio_core)
+    endif()
   elseif(TIO_STRICT_TARGETS)
     message(FATAL_ERROR "bench/benchmark.cpp missing but TIO_ENABLE_BENCHMARK=ON.")
   else()
     message(WARNING "Benchmark source missing; skip tio_benchmark target.")
+  endif()
+endif()
+
+if(TIO_ENABLE_TESTS)
+  include(CTest)
+  if(TIO_ENABLE_PLUGIN)
+    if(TARGET tio_bevpool_kernel_test)
+      add_test(NAME plugin_bevpool_kernel COMMAND $<TARGET_FILE:tio_bevpool_kernel_test>)
+    endif()
+    if(TARGET tio_alignbev_kernel_test)
+      add_test(NAME plugin_alignbev_kernel COMMAND $<TARGET_FILE:tio_alignbev_kernel_test>)
+    endif()
+    if(TARGET tio_gatherbev_kernel_test)
+      add_test(NAME plugin_gatherbev_kernel COMMAND $<TARGET_FILE:tio_gatherbev_kernel_test>)
+    endif()
+    if(TARGET tio_plugin_enqueue_smoke_test)
+      add_test(NAME plugin_enqueue_smoke COMMAND $<TARGET_FILE:tio_plugin_enqueue_smoke_test>)
+    endif()
+    if(TARGET tio_plugin_minimal_trt_test)
+      add_test(NAME plugin_minimal_trt COMMAND $<TARGET_FILE:tio_plugin_minimal_trt_test>)
+    endif()
+    if(TARGET tio_plugin_chain_trt_test)
+      add_test(NAME plugin_chain_trt COMMAND $<TARGET_FILE:tio_plugin_chain_trt_test>)
+    endif()
   endif()
 endif()

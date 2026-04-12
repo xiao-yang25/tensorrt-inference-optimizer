@@ -1,0 +1,7 @@
+build/
+build_plugin/
+engine/*.engine
+engine/*.cache
+reports/
+*.log
+checkpoint/

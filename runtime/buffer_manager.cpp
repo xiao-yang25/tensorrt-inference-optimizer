@@ -39,13 +39,34 @@ bool BufferManager::Allocate(nvinfer1::ICudaEngine* engine, nvinfer1::IExecution
       return false;
     }
     bindings_[i] = DeviceBinding{
+        name,
         ptr,
         bytes,
         mode == nvinfer1::TensorIOMode::kINPUT,
+        dims,
+        type,
     };
     raw_bindings_[i] = ptr;
   }
   return true;
+}
+
+const DeviceBinding* BufferManager::GetBinding(const std::string& name) const {
+  for (const auto& binding : bindings_) {
+    if (binding.name == name) {
+      return &binding;
+    }
+  }
+  return nullptr;
+}
+
+DeviceBinding* BufferManager::GetBinding(const std::string& name) {
+  for (auto& binding : bindings_) {
+    if (binding.name == name) {
+      return &binding;
+    }
+  }
+  return nullptr;
 }
 
 void BufferManager::Release() {

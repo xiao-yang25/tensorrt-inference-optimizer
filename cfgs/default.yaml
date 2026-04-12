@@ -1,3 +1,5 @@
+pipeline_mode: one_engine # one_engine | two_stage
+
 build:
   onnx_path: model/bevdet.onnx
   engine_path: engine/bevdet_fp16.engine
@@ -20,3 +22,23 @@ runtime:
   batch: 1
   use_async: true
   stream_count: 2
+  print_stage_timing: false
+
+two_stage:
+  img_engine_path: engine/img_stage_lt_d_fp16.engine
+  bev_engine_path: engine/bev_stage_lt_d_fp16.engine
+  img_feature_tensor: images_feat
+  img_depth_tensor: depth
+  bev_input_tensor: BEV_feat
+  enable_bevpool_bridge: true
+  use_real_bevpool: false
+  enable_temporal_concat: false
+  enable_geometric_align: false
+  adj_num: 8
+  transform_matrices_path: ""
+  transform_sequence_dir: ""
+  ranks_depth_path: ""
+  ranks_feat_path: ""
+  ranks_bev_path: ""
+  interval_starts_path: ""
+  interval_lengths_path: ""

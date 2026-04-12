@@ -9,6 +9,8 @@ namespace tio {
 namespace {
 constexpr char kPluginName[] = "BevPoolPlugin";
 constexpr char kPluginVersion[] = "1";
+constexpr int kInputCount = 8;
+constexpr int kOutputCount = 1;
 }  // namespace
 
 BevPoolPlugin::BevPoolPlugin(const std::string& name) : layer_name_(name) {}
@@ -21,12 +23,19 @@ int BevPoolPlugin::getNbOutputs() const noexcept { return 1; }
 
 nvinfer1::DimsExprs BevPoolPlugin::getOutputDimensions(int, const nvinfer1::DimsExprs* inputs, int,
                                                        nvinfer1::IExprBuilder&) noexcept {
+  // Input-0 is the BEV template tensor with target output shape.
   return inputs[0];
 }
 
 bool BevPoolPlugin::supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc* inOut, int, int) noexcept {
-  return inOut[pos].type == nvinfer1::DataType::kFLOAT &&
-         inOut[pos].format == nvinfer1::TensorFormat::kLINEAR;
+  const auto linear = nvinfer1::TensorFormat::kLINEAR;
+  if (pos < 0 || pos >= kInputCount + kOutputCount) {
+    return false;
+  }
+  if (pos <= 2 || pos == 8) {  // bev_template, depth, feat, output
+    return inOut[pos].type == nvinfer1::DataType::kFLOAT && inOut[pos].format == linear;
+  }
+  return inOut[pos].type == nvinfer1::DataType::kINT32 && inOut[pos].format == linear;
 }
 
 void BevPoolPlugin::configurePlugin(const nvinfer1::DynamicPluginTensorDesc*, int,
@@ -39,12 +48,34 @@ std::size_t BevPoolPlugin::getWorkspaceSize(const nvinfer1::PluginTensorDesc*, i
 
 int BevPoolPlugin::enqueue(const nvinfer1::PluginTensorDesc* inputDesc, const nvinfer1::PluginTensorDesc*,
                            const void* const* inputs, void* const* outputs, void*, cudaStream_t stream) noexcept {
-  int element_count = 1;
-  for (int i = 0; i < inputDesc[0].dims.nbDims; ++i) {
-    element_count *= inputDesc[0].dims.d[i];
+  // Inputs:
+  // 0: bev template (float, [N,C,H,W]), only shape used
+  // 1: depth
+  // 2: feat
+  // 3..7: ranks_depth, ranks_feat, ranks_bev, interval_starts, interval_lengths (int32)
+  int map_size = 1;
+  if (inputDesc[0].dims.nbDims < 4) {
+    return -1;
   }
-  LaunchBevPoolIdentityKernel(static_cast<const float*>(inputs[0]), static_cast<float*>(outputs[0]), element_count,
-                              stream);
+  const int channels = inputDesc[0].dims.d[1];
+  map_size = inputDesc[0].dims.d[2] * inputDesc[0].dims.d[3];
+
+  int n_intervals = 1;
+  for (int i = 0; i < inputDesc[7].dims.nbDims; ++i) {
+    n_intervals *= inputDesc[7].dims.d[i];
+  }
+  if (channels <= 0 || map_size <= 0 || n_intervals <= 0) {
+    return -1;
+  }
+
+  LaunchBevPoolKernel(
+      channels, n_intervals, map_size, static_cast<const float*>(inputs[1]), static_cast<const float*>(inputs[2]),
+      static_cast<const int*>(inputs[3]), static_cast<const int*>(inputs[4]), static_cast<const int*>(inputs[5]),
+      static_cast<const int*>(inputs[6]), static_cast<const int*>(inputs[7]), static_cast<float*>(outputs[0]),
+      stream);
+  if (cudaPeekAtLastError() != cudaSuccess) {
+    return -1;
+  }
   return 0;
 }
 

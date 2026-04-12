@@ -1,3 +1,5 @@
+pipeline_mode: one_engine # one_engine | two_stage
+
 build:
   onnx_path: model/bevdet.onnx
   engine_path: engine/bevdet_fp16.engine
@@ -18,3 +20,29 @@ runtime:
   batch: 1
   use_async: true
   stream_count: 2
+  print_stage_timing: false
+
+two_stage:
+  img_engine_path: engine/img_stage_lt_d_fp16.engine
+  bev_engine_path: engine/bev_stage_lt_d_fp16.engine
+  img_feature_tensor: images_feat
+  img_depth_tensor: depth
+  bev_input_tensor: BEV_feat
+  # Phase-1 bridge is a scaffold copy path and not real BEVPool.
+  enable_bevpool_bridge: true
+  # Enable when ranks_* and interval_* binaries are prepared.
+  use_real_bevpool: false
+  # Stage-1 temporal path: concat cached BEV features without geometry warp.
+  enable_temporal_concat: false
+  # If true, temporal features are warped by per-adj 3x3 transforms before concat.
+  enable_geometric_align: false
+  adj_num: 8
+  # Optional float32 binary file, shape [adj_num, 9], row-major 3x3 matrices.
+  transform_matrices_path: ""
+  # Optional directory of per-frame transform bins (*.bin), each shape [adj_num, 9].
+  transform_sequence_dir: ""
+  ranks_depth_path: ""
+  ranks_feat_path: ""
+  ranks_bev_path: ""
+  interval_starts_path: ""
+  interval_lengths_path: ""

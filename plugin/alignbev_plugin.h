@@ -8,34 +8,30 @@
 
 namespace tio {
 
-void LaunchBevPoolKernel(int channels, int n_intervals, int map_size, const float* depth, const float* feat,
-                         const int* ranks_depth, const int* ranks_feat, const int* ranks_bev,
-                         const int* interval_starts, const int* interval_lengths, float* output,
-                         cudaStream_t stream);
+void LaunchAlignBevKernel(const float* input, const float* transforms, float* output, int adj_num, int channels,
+                          int bev_h, int bev_w, cudaStream_t stream);
 
-class BevPoolPlugin final : public nvinfer1::IPluginV2DynamicExt {
+class AlignBevPlugin final : public nvinfer1::IPluginV2DynamicExt {
  public:
   using nvinfer1::IPluginV2Ext::configurePlugin;
   using nvinfer1::IPluginV2::enqueue;
   using nvinfer1::IPluginV2::getOutputDimensions;
   using nvinfer1::IPluginV2::getWorkspaceSize;
 
-  BevPoolPlugin() = default;
-  explicit BevPoolPlugin(const std::string& name);
-  BevPoolPlugin(const void* serial_data, std::size_t serial_length);
-  ~BevPoolPlugin() override = default;
+  AlignBevPlugin() = default;
+  explicit AlignBevPlugin(const std::string& name);
+  AlignBevPlugin(const void* serial_data, std::size_t serial_length);
+  ~AlignBevPlugin() override = default;
 
   int getNbOutputs() const noexcept override;
-  nvinfer1::DimsExprs getOutputDimensions(int outputIndex, const nvinfer1::DimsExprs* inputs,
-                                          int nbInputs,
+  nvinfer1::DimsExprs getOutputDimensions(int outputIndex, const nvinfer1::DimsExprs* inputs, int nbInputs,
                                           nvinfer1::IExprBuilder& exprBuilder) noexcept override;
   bool supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc* inOut, int nbInputs,
                                  int nbOutputs) noexcept override;
   void configurePlugin(const nvinfer1::DynamicPluginTensorDesc* in, int nbInputs,
                        const nvinfer1::DynamicPluginTensorDesc* out, int nbOutputs) noexcept override;
   std::size_t getWorkspaceSize(const nvinfer1::PluginTensorDesc* inputs, int nbInputs,
-                               const nvinfer1::PluginTensorDesc* outputs,
-                               int nbOutputs) const noexcept override;
+                               const nvinfer1::PluginTensorDesc* outputs, int nbOutputs) const noexcept override;
   int enqueue(const nvinfer1::PluginTensorDesc* inputDesc, const nvinfer1::PluginTensorDesc* outputDesc,
               const void* const* inputs, void* const* outputs, void* workspace,
               cudaStream_t stream) noexcept override;
@@ -57,14 +53,14 @@ class BevPoolPlugin final : public nvinfer1::IPluginV2DynamicExt {
   void detachFromContext() noexcept override {}
 
  private:
-  std::string layer_name_{"bevpool_plugin"};
+  std::string layer_name_{"alignbev_plugin"};
   std::string namespace_;
 };
 
-class BevPoolPluginCreator final : public nvinfer1::IPluginCreator {
+class AlignBevPluginCreator final : public nvinfer1::IPluginCreator {
  public:
-  BevPoolPluginCreator();
-  ~BevPoolPluginCreator() override = default;
+  AlignBevPluginCreator();
+  ~AlignBevPluginCreator() override = default;
 
   const char* getPluginName() const noexcept override;
   const char* getPluginVersion() const noexcept override;

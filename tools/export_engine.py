@@ -4,14 +4,36 @@ import subprocess
 import sys
 
 
+def detect_workspace_flag():
+    """Pick compatible workspace flag by inspecting trtexec help."""
+    try:
+        result = subprocess.run(
+            ["trtexec", "--help"],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+    except FileNotFoundError:
+        return "--workspace"
+    output = result.stdout or ""
+    if "--memPoolSize" in output:
+        return "--memPoolSize"
+    return "--workspace"
+
+
 def build_cmd(args):
+    workspace_flag = detect_workspace_flag()
     cmd = [
         "trtexec",
         f"--onnx={args.onnx}",
         f"--saveEngine={args.engine}",
-        f"--workspace={args.workspace}",
         "--verbose",
     ]
+    if workspace_flag == "--memPoolSize":
+        cmd.append(f"--memPoolSize=workspace:{args.workspace}")
+    else:
+        cmd.append(f"--workspace={args.workspace}")
     if args.fp16:
         cmd.append("--fp16")
     if args.int8:
