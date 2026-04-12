@@ -8,9 +8,7 @@ build:
   workspace_mb: 4096
   input_tensor_name: input
   calibrator_cache_path: engine/calib.cache
-  calibration_batches:
-    - sample0/calib_batch_000.bin
-    - sample0/calib_batch_001.bin
+  calibration_batches: []
   profile:
     min: [1, 6, 3, 256, 704]
     opt: [4, 6, 3, 256, 704]

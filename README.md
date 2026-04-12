@@ -49,15 +49,21 @@ tools/oneclick_ci.sh
 - CMake: 3.22.1
 - g++: 11.4.0
 
+## 本地产物（不入库）
+
+`checkpoint/`、`model/`、`sample0/` 及 `engine/*.engine` 等**不会提交到远程仓库**，克隆后请按说明自行放置或生成：
+
+- 详见 **`docs/local_artifacts.md`**
+
 ## 快速开始
 
-### A) 真实两阶段 ONNX（推荐，与本仓库 `checkpoint/` 对齐）
+### A) 真实两阶段 ONNX（推荐）
 
-本仓库在 `checkpoint/` 下提供了与 [`LCH1238/BEVDet` export 分支说明](https://github.com/LCH1238/BEVDet/blob/export/README_zh-CN.md)一致的产物形态：
+按 [`LCH1238/BEVDet` export 分支说明](https://github.com/LCH1238/BEVDet/blob/export/README_zh-CN.md) 导出 ONNX 与权重后，放入仓库根目录下的 **`checkpoint/`**（本地自建目录），例如：
 
 - `checkpoint/img_stage_lt_d.onnx` / `checkpoint/bev_stage_lt_d.onnx`
-- `checkpoint/img_stage_ft.onnx` / `checkpoint/bev_stage_ft.onnx`
-- `checkpoint/bevdet-lt-d-ft-nearest.pth`（训练权重；两阶段 ONNX 已包含导出推理所需权重）
+- `checkpoint/img_stage_ft.onnx` / `checkpoint/bev_stage_ft.onnx`（若使用对应变体）
+- `checkpoint/bevdet-lt-d-ft-nearest.pth`（按需）
 
 一键构建 FP16 engine 并跑 `trtexec` 自带 benchmark：
 
@@ -88,7 +94,9 @@ trtexec \
 - `img_stage` 与 `bev_stage` 之间通常还存在 **视图变换 + BEV 特征构造** 等预处理/中间算子（不在 `bev_stage*.onnx` 的输入里）。因此这里的“跑通”指 **两张真实 ONNX 各自完成 TensorRT 构建与 GPU 推理计时**；端到端链路需要按 `bevdet-tensorrt-cpp` 的 C++ 工程把中间模块接起来。
 - `trtexec` 默认输入为随机数据，但 **算子与权重来自真实 ONNX**；若你要用 nuScenes 等真实传感器张量，请使用 `trtexec --loadInputs=...`（需自行准备 `.pb` 输入包）。
 
-### B) 单输入 `model/bevdet.onnx`（工程骨架 demo / benchmark）
+### B) 单输入 ONNX（工程骨架 demo / benchmark）
+
+将单输入 ONNX（如 `bevdet.onnx`）放到本地 **`model/`** 目录，并在配置中指向 `build.onnx_path`（默认示例为 `model/bevdet.onnx`）。
 
 1) （可选）生成 INT8 校准 batch（仅用于骨架 INT8 流程验证）：
 
@@ -117,7 +125,7 @@ python tools/export_engine.py \
 4) 运行 benchmark：
 
 ```bash
-tools/run.sh -m benchmark -c cfgs/bench_fp16.yaml
+tools/run.sh -m benchmark -c cfgs/default.yaml
 ```
 
 5) 生成 INT8 vs FP16 报告（时延/吞吐 + 输出误差）：
@@ -133,9 +141,9 @@ python tools/int8_fp16_report.py \
   --json-out reports/int8_fp16_report.json
 ```
 
-## 实测结果（当前仓库）
+## 参考 benchmark（需在本地准备 `checkpoint/`）
 
-以下数据来自 **RTX 3090 + TensorRT 10.1.0（CUDA 12.4）**，对 `checkpoint/*_lt_d.onnx` 运行 `trtexec --fp16 --memPoolSize=workspace:4096` 的默认 benchmark（含 H2D/D2H 的 **Latency** 与不含传输的 **GPU Compute Time**）。
+以下数据来自 **RTX 3090 + TensorRT 10.1.0（CUDA 12.4）**，在本地放置 `checkpoint/img_stage_lt_d.onnx` 与 `checkpoint/bev_stage_lt_d.onnx` 后，对两阶段 ONNX 运行 `trtexec --fp16 --memPoolSize=workspace:4096` 的默认 benchmark（含 H2D/D2H 的 **Latency** 与不含传输的 **GPU Compute Time**）。**非仓库内置文件**，仅供复现时对照。
 
 | Stage | GPU Compute mean(ms) | Latency mean(ms) | Throughput(qps) | Engine |
 |---|---:|---:|---:|---|
@@ -158,4 +166,5 @@ python tools/int8_fp16_report.py \
 - `docs/int8_evaluation.md`
 - `docs/architecture.md`
 - `docs/directory_layout.md`
+- `docs/local_artifacts.md`
 - `docs/resume_project_brief.md`

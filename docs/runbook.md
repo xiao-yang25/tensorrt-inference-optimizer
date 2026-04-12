@@ -2,7 +2,7 @@
 
 ## 0) 真实 `checkpoint/` 两阶段 ONNX（TensorRT）
 
-本仓库 `checkpoint/` 下的 `img_stage*.onnx` / `bev_stage*.onnx` 与 [`LCH1238/BEVDet` export 分支说明](https://github.com/LCH1238/BEVDet/blob/export/README_zh-CN.md)一致：用于 `bevdet-tensorrt-cpp` 风格部署时的分段推理。
+在本地准备的 `checkpoint/` 下放置 `img_stage*.onnx` / `bev_stage*.onnx`（与 [`LCH1238/BEVDet` export 分支说明](https://github.com/LCH1238/BEVDet/blob/export/README_zh-CN.md)一致），用于 `bevdet-tensorrt-cpp` 风格部署时的分段推理；**该目录不入库**，见 `docs/local_artifacts.md`。
 
 一键构建 FP16 engine 并跑 `trtexec` benchmark：
 

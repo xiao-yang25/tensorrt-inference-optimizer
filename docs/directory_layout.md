@@ -10,15 +10,15 @@
 | `README.md` / `README_EN.md` | 项目说明与快速上手（中英）。 |
 | `configure.yaml` | 运行时/流水线常用配置示例（与 `cfgs/` 可二选一或并存）。 |
 | `bench/` | 基准测试与引擎对比工具源码（如 `tio_benchmark`、`tio_compare_engines`）。 |
-| `cfgs/` | 示例 YAML 配置（如 `bench_fp16.yaml`），供 `tio_demo` / `tio_benchmark` 使用。 |
-| `checkpoint/` | **大模型资产**：两阶段 ONNX、权重等；经 **Git LFS** 跟踪（见 `.gitattributes`）。 |
+| `cfgs/` | 示例 YAML 配置（如 `default.yaml`），供 `tio_demo` / `tio_benchmark` 使用。 |
+| `checkpoint/` | **仅本地**：两阶段 ONNX、权重等，不入库；准备方式见 `docs/local_artifacts.md`。 |
 | `docs/` | **人工维护**的设计、流程、架构、简历说明等文档；**不含** CI 生成的验证报告。 |
 | `engine/` | **源码**：TensorRT 构建与校准器实现（`builder.*`、`calibrator.*`）；**不是** 生成引擎输出目录。 |
 | `include/` | 对外头文件（如 `config.h`、`logger.h`）。 |
-| `model/` | 单引擎骨架示例 ONNX 等资源（如 `bevdet.onnx`）。 |
+| `model/` | **仅本地**：单引擎骨架 ONNX 等，不入库；见 `docs/local_artifacts.md`。 |
 | `plugin/` | TensorRT 自定义插件：BEVPool / Align / Gather 及注册、测试入口。 |
 | `runtime/` | 推理运行时：buffer、单引擎 runner、两阶段 pipeline、BEVPool/Align CUDA 桥接。 |
-| `sample0/` | 校准 batch、样例数据等**小体积**开发与测试输入。 |
+| `sample0/` | **仅本地**：校准 batch、BEVPool 索引等开发与测试输入，不入库。 |
 | `src/` | 主程序入口（如 `demo_main.cpp`）。 |
 | `tools/` | 构建/运行/导出/一键 CI/数据生成等脚本与辅助 Python。 |
 
@@ -29,7 +29,8 @@
 | 路径 | 说明 |
 |------|------|
 | `build/`、`build_plugin/`、`build_ci/` | CMake 构建目录；**禁止**纳入版本控制。 |
-| `engine/*.engine`、`engine/*.cache` | 导出的 TensorRT 引擎与校准缓存。 |
+| `checkpoint/`、`model/`、`sample0/` | 模型与样例数据；**仅本地**，不入库。 |
+| `engine/*.engine`、`engine/*.cache` | **仅本地**：导出的 TensorRT 引擎与校准缓存（`engine/` 目录下的 **源码** 仍入库）。 |
 | `reports/` | 含 `reports/ci/oneclick_ci.log`、`reports/verification_report.md` 等**生成报告**。 |
 | `*.log` | 临时日志。 |
 
@@ -63,12 +64,7 @@ git remote -v
 git push origin HEAD
 ```
 
-若使用 **Git LFS** 管理 `checkpoint/` 下大文件，克隆后需安装 LFS 并拉取指针实体：
-
-```bash
-git lfs install
-git lfs pull
-```
+本地产物清单与准备命令见 **`docs/local_artifacts.md`**。
 
 仅更新子模块或更换远程 URL（按需）：
 

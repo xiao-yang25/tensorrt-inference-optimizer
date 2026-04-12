@@ -1,2 +1,2 @@
-checkpoint/*.pth filter=lfs diff=lfs merge=lfs -text
-checkpoint/*.onnx filter=lfs diff=lfs merge=lfs -text
+# 大文件与中间产物改为仅本地放置，不再使用 Git LFS 跟踪。
+# 见 docs/local_artifacts.md

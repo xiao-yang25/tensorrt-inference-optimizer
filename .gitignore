@@ -1,6 +1,9 @@
 build/
 build_ci/
 build_plugin/
+checkpoint/
+model/
+sample0/
 engine/*.engine
 engine/*.cache
 reports/

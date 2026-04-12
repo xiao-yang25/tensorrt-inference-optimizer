@@ -55,7 +55,7 @@
 优点：
 
 - 风险低，调试边界清晰
-- 容易复用你当前已有 `checkpoint/img_stage*.onnx`、`bev_stage*.onnx`
+- 容易复用你本地 `checkpoint/` 下的 `img_stage*.onnx`、`bev_stage*.onnx`（需自备，不入库）
 - 容易做阶段级 profiling（可直接定位瓶颈）
 
 ## Track-B（中期优化）：单引擎插件融合链路

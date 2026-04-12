@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Build + benchmark the two-stage ONNX artifacts shipped under checkpoint/.
-# This matches the export layout described in:
+# Build + benchmark two-stage ONNX under local checkpoint/ (not in Git).
+# Layout matches the export described in:
 # https://github.com/LCH1238/BEVDet/blob/export/README_zh-CN.md
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

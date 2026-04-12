@@ -49,19 +49,21 @@ Generated artifacts:
 - CMake: 3.22.1
 - g++: 11.4.0
 
+## Local artifacts (not in Git)
+
+`checkpoint/`, `model/`, `sample0/`, and `engine/*.engine` are **not committed** to the remote. After clone, prepare them locally:
+
+- See **`docs/local_artifacts.md`**
+
 ## Quick Start
 
-### A) Real two-stage ONNX (recommended; matches `checkpoint/`)
+### A) Real two-stage ONNX (recommended)
 
-This repo ships artifacts consistent with the export layout described in:
-
-[`LCH1238/BEVDet` export branch README (zh-CN)](https://github.com/LCH1238/BEVDet/blob/export/README_zh-CN.md)
-
-Files:
+Export ONNX and weights following [`LCH1238/BEVDet` export branch README (zh-CN)](https://github.com/LCH1238/BEVDet/blob/export/README_zh-CN.md), then place them under a local **`checkpoint/`** directory at the repo root, for example:
 
 - `checkpoint/img_stage_lt_d.onnx` / `checkpoint/bev_stage_lt_d.onnx`
-- `checkpoint/img_stage_ft.onnx` / `checkpoint/bev_stage_ft.onnx`
-- `checkpoint/bevdet-lt-d-ft-nearest.pth` (training checkpoint; ONNX already contains exported inference weights)
+- `checkpoint/img_stage_ft.onnx` / `checkpoint/bev_stage_ft.onnx` (if using that variant)
+- `checkpoint/bevdet-lt-d-ft-nearest.pth` (optional)
 
 One command to build FP16 engines and run `trtexec`'s built-in benchmark:
 
@@ -92,7 +94,9 @@ Notes:
 - Between `img_stage` and `bev_stage`, a real deployment still needs **view transform + BEV feature construction** (not present as inputs inside `bev_stage*.onnx`). So “end-to-end” here means **each ONNX builds and benchmarks independently** on TensorRT; wiring the middle modules is done in `bevdet-tensorrt-cpp`-style C++ pipelines.
 - `trtexec` defaults to random inputs, but **ops/weights are from the real ONNX**. For dataset tensors (e.g. nuScenes), use `trtexec --loadInputs=...` with a prepared `.pb` input bundle.
 
-### B) Single-input `model/bevdet.onnx` (scaffold demo / benchmark)
+### B) Single-input ONNX (scaffold demo / benchmark)
+
+Put the ONNX (e.g. `bevdet.onnx`) under local **`model/`** and set `build.onnx_path` in your YAML (default example: `model/bevdet.onnx`).
 
 1) (Optional) Generate INT8 calibration batches (scaffold INT8 flow only):
 
@@ -121,12 +125,12 @@ python tools/export_engine.py \
 4) Run benchmark:
 
 ```bash
-tools/run.sh -m benchmark -c cfgs/bench_fp16.yaml
+tools/run.sh -m benchmark -c cfgs/default.yaml
 ```
 
-## Measured Results (current repository)
+## Reference benchmark (requires local `checkpoint/`)
 
-Numbers below are from **RTX 3090 + TensorRT 10.1.0 (CUDA 12.4)**, running `trtexec --fp16 --memPoolSize=workspace:4096` on `checkpoint/*_lt_d.onnx` with the default benchmark. **Latency** includes H2D + GPU + D2H; **GPU Compute Time** excludes transfers.
+Numbers below are from **RTX 3090 + TensorRT 10.1.0 (CUDA 12.4)**, after placing `checkpoint/img_stage_lt_d.onnx` and `checkpoint/bev_stage_lt_d.onnx` locally, running `trtexec --fp16 --memPoolSize=workspace:4096` with the default benchmark. **Latency** includes H2D + GPU + D2H; **GPU Compute Time** excludes transfers. **Not shipped with the repository**; for reproduction only.
 
 | Stage | GPU Compute mean(ms) | Latency mean(ms) | Throughput(qps) | Engine |
 |---|---:|---:|---:|---|
@@ -149,4 +153,5 @@ See also:
 - `docs/int8_evaluation.md`
 - `docs/architecture.md`
 - `docs/directory_layout.md`
+- `docs/local_artifacts.md`
 - `docs/resume_project_brief.md`
